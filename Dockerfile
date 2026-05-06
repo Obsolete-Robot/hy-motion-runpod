@@ -25,7 +25,7 @@ WORKDIR /app/HY-Motion-1.0
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
 
-RUN python - <<'PY'
+RUN HF_HUB_ENABLE_HF_TRANSFER=0 python - <<'PY'
 from huggingface_hub import snapshot_download
 snapshot_download(
     repo_id="tencent/HY-Motion-1.0",
