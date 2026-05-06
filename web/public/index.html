@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HY-Motion Generator</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Obsolete Robot · HY-Motion</p>
+      <h1>Text → 3D motion file</h1>
+      <p class="sub">Describe a short humanoid action. Keep it action-focused and under ~60 words for best results.</p>
+    </section>
+
+    <form id="form" class="card">
+      <label for="prompt">Prompt</label>
+      <textarea id="prompt" name="prompt" rows="5" placeholder="A person walks forward, trips, catches balance, then waves." required></textarea>
+
+      <div class="row">
+        <label>Model
+          <select id="model">
+            <option value="lite" selected>Lite</option>
+            <option value="full">Full</option>
+          </select>
+        </label>
+        <label>Seeds
+          <input id="seeds" type="number" min="1" max="4" value="1" />
+        </label>
+      </div>
+
+      <button id="submit" type="submit">Generate animation</button>
+    </form>
+
+    <section id="status" class="card muted">Ready.</section>
+    <section id="result" class="card hidden"></section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
