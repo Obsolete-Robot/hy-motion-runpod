@@ -2,9 +2,9 @@ FROM runpod/pytorch:0.7.2-dev-cu1241-torch251-ubuntu2204
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    HF_HOME=/runpod-volume/huggingface \
+    HF_HOME=/app/.cache/huggingface \
     HYMOTION_DIR=/app/HY-Motion-1.0 \
-    MODEL_ROOT=/runpod-volume/ckpts/tencent \
+    MODEL_ROOT=/app/ckpts/tencent \
     PYTHON=/usr/bin/python3.10
 
 RUN ln -sf /usr/bin/python3.10 /usr/local/bin/python \
@@ -24,6 +24,16 @@ RUN git lfs install \
 WORKDIR /app/HY-Motion-1.0
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
+
+RUN python - <<'PY'
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id="tencent/HY-Motion-1.0",
+    local_dir="/app/ckpts/tencent",
+    local_dir_use_symlinks=False,
+    allow_patterns=["HY-Motion-1.0-Lite/*"],
+)
+PY
 
 WORKDIR /app
 COPY requirements-worker.txt /app/requirements-worker.txt
