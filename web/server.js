@@ -97,7 +97,8 @@ async function handleApi(req, res, url) {
       if (!prompt) return json(res, 400, { error: 'Prompt is required.' });
       if (prompt.length > 1000) return json(res, 400, { error: 'Prompt is too long.' });
 
-      const model = 'lite';
+      const requestedModel = String(input.model || 'lite').toLowerCase();
+      const model = requestedModel === 'full' ? 'full' : 'lite';
       const body = await runpodFetch('/run', {
         method: 'POST',
         body: JSON.stringify({

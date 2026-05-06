@@ -32,7 +32,7 @@ snapshot_download(
     repo_id="tencent/HY-Motion-1.0",
     local_dir="/app/HY-Motion-1.0/ckpts/tencent",
     local_dir_use_symlinks=False,
-    allow_patterns=["HY-Motion-1.0-Lite/*"],
+    allow_patterns=["HY-Motion-1.0-Lite/*", "HY-Motion-1.0/*"],
 )
 snapshot_download(
     repo_id="openai/clip-vit-large-patch14",
