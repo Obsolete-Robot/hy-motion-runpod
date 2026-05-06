@@ -1,8 +1,10 @@
+import base64
 import json
 import os
 import shutil
 import subprocess
 import uuid
+import urllib.request
 from pathlib import Path
 
 # RunPod currently injects RUNPOD_WEBHOOK_GET_JOB with $RUNPOD_POD_ID, while
@@ -36,6 +38,26 @@ def model_path(variant: str) -> tuple[str, Path]:
         return "lite", MODEL_ROOT / "HY-Motion-1.0-Lite"
     raise ValueError(f"Unknown model variant: {variant}")
 
+
+
+def upload_file_http(path: Path, job_id: str) -> str | None:
+    base_url = os.getenv("UPLOAD_BASE_URL", "https://hy-motion.inviteonlyinternet.com").rstrip("/")
+    if not base_url:
+        return None
+    payload = json.dumps({
+        "job_id": job_id,
+        "name": path.name,
+        "content_base64": base64.b64encode(path.read_bytes()).decode("ascii"),
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base_url}/api/uploads",
+        data=payload,
+        headers={"Content-Type": "application/json", "User-Agent": "hy-motion-runpod-worker"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=int(os.getenv("UPLOAD_TIMEOUT_SECONDS", "180"))) as resp:
+        body = json.loads(resp.read().decode("utf-8") or "{}")
+    return body.get("url")
 
 def upload_file(path: Path, job_id: str) -> str | None:
     bucket = os.getenv("S3_BUCKET") or os.getenv("R2_BUCKET")
@@ -126,7 +148,16 @@ def handler(event):
     files = [p for p in output_dir.rglob("*") if p.is_file()]
     uploaded = []
     for p in files:
-        url = upload_file(p, job_id)
+        url = None
+        try:
+            url = upload_file_http(p, job_id)
+        except Exception as exc:
+            print(f">>> HTTP upload failed for {p.name}: {exc}")
+        if url is None:
+            try:
+                url = upload_file(p, job_id)
+            except Exception as exc:
+                print(f">>> S3 upload failed for {p.name}: {exc}")
         uploaded.append({"name": p.name, "path": str(p), "url": url})
 
     response = {
