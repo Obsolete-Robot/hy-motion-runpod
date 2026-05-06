@@ -25,3 +25,17 @@ a { color: #94f7c4; font-weight: 800; }
 .history-item p { margin: 8px 0; color: #dbe4ff; }
 .history-item small { color: #8994bd; margin-left: 8px; }
 .history-item button { width: auto; padding: 8px 12px; font-size: 14px; }
+.viewer-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.viewer-head h2 { margin: 0 0 6px; }
+.viewer-head p { margin: 0; }
+.viewer-canvas { width: 100%; height: min(62vh, 560px); min-height: 360px; overflow: hidden; border-radius: 16px; border: 1px solid rgba(255,255,255,.12); background: #080a12; margin-top: 16px; }
+.viewer-canvas canvas { display: block; width: 100%; height: 100%; }
+.secondary-button, .inline-button { width: auto; color: #dbe4ff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); }
+.secondary-button { padding: 10px 14px; }
+.inline-button { padding: 6px 10px; margin-left: 8px; font-size: 13px; vertical-align: middle; }
+.inline-button:hover, .secondary-button:hover { background: rgba(136,216,255,.18); }
+@media (max-width: 640px) {
+  .viewer-head { flex-direction: column; }
+  .viewer-canvas { min-height: 300px; }
+  .inline-button { display: block; margin: 8px 0 0; }
+}

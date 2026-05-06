@@ -34,10 +34,21 @@
     </form>
 
     <section id="status" class="card muted">Ready.</section>
+    <section id="viewer" class="card viewer-card hidden">
+      <div class="viewer-head">
+        <div>
+          <h2>FBX Viewer</h2>
+          <p id="viewer-caption" class="muted">Click “View animation” on a completed FBX to load it here.</p>
+        </div>
+        <button id="viewer-clear" class="secondary-button" type="button">Clear</button>
+      </div>
+      <div id="viewer-canvas" class="viewer-canvas"></div>
+    </section>
     <section id="result" class="card hidden"></section>
     <section class="card"><h2>History</h2><div id="history" class="history muted">Loading…</div></section>
   </main>
 
+  <script type="module" src="/fbx-viewer.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

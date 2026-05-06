@@ -12,10 +12,25 @@ function setStatus(html, cls = '') {
   statusEl.innerHTML = html;
 }
 
-function fileLinksFrom(job) {
+function filesFrom(job) {
   const output = job?.output || job?.result?.output || job?.result || job;
-  const files = output?.files || [];
-  return files.filter(f => f.url).map(f => `<li><a href="${f.url}" target="_blank" rel="noopener">${escapeHtml(f.name || f.url)}</a></li>`).join('');
+  return output?.files || [];
+}
+
+function isFbxFile(file) {
+  const label = String(file?.name || file?.url || '').split('?')[0].toLowerCase();
+  return label.endsWith('.fbx');
+}
+
+function fileLinksFrom(job) {
+  return filesFrom(job).filter(f => f.url).map(f => {
+    const label = escapeHtml(f.name || f.url);
+    const url = escapeHtml(f.url);
+    const viewerButton = isFbxFile(f)
+      ? ` <button class="inline-button" type="button" data-fbx-url="${url}" data-fbx-name="${label}">View animation</button>`
+      : '';
+    return `<li><a href="${url}" target="_blank" rel="noopener">${label}</a>${viewerButton}</li>`;
+  }).join('');
 }
 
 function showResult(job) {
@@ -54,6 +69,12 @@ async function loadHistory() {
     historyEl.innerHTML = `<span class="bad">Could not load history: ${escapeHtml(err.message)}</span>`;
   }
 }
+
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-fbx-url]');
+  if (!button) return;
+  window.loadFbxViewer?.(button.dataset.fbxUrl, button.dataset.fbxName || 'Animation');
+});
 
 historyEl.addEventListener('click', async (event) => {
   const button = event.target.closest('button[data-job]');
