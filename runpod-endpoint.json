@@ -1,0 +1,18 @@
+{
+  "template": {
+    "id": "as3vo8aljh",
+    "name": "hy-motion-runpod",
+    "imageName": "ghcr.io/obsolete-robot/hy-motion-runpod:latest",
+    "isServerless": true,
+    "containerDiskInGb": 30
+  },
+  "endpoint": {
+    "id": "uytph7tbhb3j9q",
+    "name": "hy-motion",
+    "gpuIds": "AMPERE_48",
+    "idleTimeout": 5,
+    "templateId": "as3vo8aljh",
+    "workersMax": 1,
+    "workersMin": 0
+  }
+}
