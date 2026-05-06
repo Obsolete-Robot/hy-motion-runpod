@@ -51,7 +51,7 @@ def gql(api_key: str, query: str) -> dict:
     req = urllib.request.Request(
         f"https://api.runpod.io/graphql?api_key={api_key}",
         data=data,
-        headers={"content-type": "application/json"},
+        headers={"content-type": "application/json", "user-agent": "runpod-python/1.9.0"},
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         body = json.load(resp)
