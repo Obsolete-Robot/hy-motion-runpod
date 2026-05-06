@@ -75,8 +75,17 @@ def handler(event):
     input_dir.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # HY-Motion works best with short action-focused English prompts.
-    (input_dir / "prompt.txt").write_text(prompt, encoding="utf-8")
+    # HY-Motion input supports prompt[#frames][#id]. Use frames to control fixed duration.
+    duration_seconds = inp.get("duration_seconds")
+    duration_frames = inp.get("duration_frames")
+    if duration_seconds is not None:
+        duration_frames = max(1, int(round(float(duration_seconds) * 30)))
+    if duration_frames is not None:
+        duration_frames = max(1, int(duration_frames))
+        prompt_line = f"{prompt}#{duration_frames}"
+    else:
+        prompt_line = prompt
+    (input_dir / "prompt.txt").write_text(prompt_line, encoding="utf-8")
 
     requested_variant = inp.get("model") or os.getenv("MODEL_VARIANT", "lite")
     resolved_variant, mp = model_path(requested_variant)
@@ -93,10 +102,15 @@ def handler(event):
         "--model_path", str(mp),
         "--input_text_dir", str(input_dir),
         "--output_dir", str(output_dir),
-        "--disable_duration_est",
-        "--disable_rewrite",
+        "--cfg_scale", str(float(inp.get("cfg_scale", 5.0))),
         "--num_seeds", str(int(inp.get("num_seeds", 1))),
     ]
+    if bool(inp.get("disable_duration_est", True)):
+        cmd.append("--disable_duration_est")
+    if bool(inp.get("disable_rewrite", True)):
+        cmd.append("--disable_rewrite")
+    if inp.get("validation_steps") is not None:
+        cmd.extend(["--validation_steps", str(int(inp["validation_steps"]))])
 
     env = os.environ.copy()
     result = subprocess.run(
@@ -120,6 +134,16 @@ def handler(event):
         "returncode": result.returncode,
         "files": uploaded,
         "output_dir": str(output_dir),
+        "options": {
+            "model": resolved_variant,
+            "num_seeds": int(inp.get("num_seeds", 1)),
+            "duration_frames": duration_frames,
+            "duration_seconds": (duration_frames / 30.0) if duration_frames is not None else None,
+            "cfg_scale": float(inp.get("cfg_scale", 5.0)),
+            "disable_rewrite": bool(inp.get("disable_rewrite", True)),
+            "disable_duration_est": bool(inp.get("disable_duration_est", True)),
+            "validation_steps": inp.get("validation_steps"),
+        },
         "log_tail": result.stdout[-4000:],
     }
 
