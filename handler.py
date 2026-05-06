@@ -5,6 +5,14 @@ import subprocess
 import uuid
 from pathlib import Path
 
+# RunPod currently injects RUNPOD_WEBHOOK_GET_JOB with $RUNPOD_POD_ID, while
+# runpod-python 1.9.0's job client substitutes $ID. Normalize before importing
+# runpod so module-level URL constants are built correctly.
+if "$RUNPOD_POD_ID" in os.getenv("RUNPOD_WEBHOOK_GET_JOB", ""):
+    os.environ["RUNPOD_WEBHOOK_GET_JOB"] = os.environ["RUNPOD_WEBHOOK_GET_JOB"].replace(
+        "$RUNPOD_POD_ID", "$ID"
+    )
+
 import runpod
 
 try:
