@@ -53,8 +53,13 @@ def gql(api_key: str, query: str) -> dict:
         data=data,
         headers={"content-type": "application/json", "user-agent": "runpod-python/1.9.0"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = json.load(resp)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = json.load(resp)
+    except Exception as e:
+        if hasattr(e, "read"):
+            print(e.read().decode(errors="ignore")[:4000])
+        raise
     if body.get("errors"):
         raise SystemExit(json.dumps(body["errors"], indent=2))
     return body["data"]
@@ -89,6 +94,7 @@ def main() -> None:
     mutation {{
       saveTemplate(input: {{
         containerDiskInGb: {CONTAINER_DISK_GB},
+        dockerArgs: "",
         imageName: {gql_string(IMAGE)},
         isServerless: true,
         name: {gql_string(TEMPLATE_NAME)},
