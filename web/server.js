@@ -6,9 +6,31 @@ const PORT = Number(process.env.PORT || 3017);
 const ENDPOINT_ID = process.env.RUNPOD_ENDPOINT_ID || 'uytph7tbhb3j9q';
 const API_KEY_FILE = process.env.RUNPOD_API_KEY_FILE || '/home/david/.config/runpod/api-key';
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const DATA_DIR = process.env.DATA_DIR || '/srv/apps/hy-motion-web-data';
+const HISTORY_FILE = path.join(DATA_DIR, 'jobs.json');
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 function readRunpodKey() {
   return fs.readFileSync(API_KEY_FILE, 'utf8').trim();
+}
+
+function loadHistory() {
+  try { return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8')); } catch { return []; }
+}
+
+function saveHistory(items) {
+  const tmp = HISTORY_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(items.slice(0, 100), null, 2));
+  fs.renameSync(tmp, HISTORY_FILE);
+}
+
+function upsertJob(patch) {
+  const items = loadHistory();
+  const idx = items.findIndex(j => j.id === patch.id);
+  const now = new Date().toISOString();
+  if (idx >= 0) items[idx] = { ...items[idx], ...patch, updatedAt: now };
+  else items.unshift({ createdAt: now, updatedAt: now, ...patch });
+  saveHistory(items);
 }
 
 function json(res, status, body) {
@@ -59,6 +81,10 @@ async function runpodFetch(pathname, options = {}) {
 
 async function handleApi(req, res, url) {
   try {
+    if (req.method === 'GET' && url.pathname === '/api/history') {
+      return json(res, 200, { jobs: loadHistory() });
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/health') {
       const body = await runpodFetch('/health', { method: 'GET', headers: { 'content-type': undefined } });
       return json(res, 200, { ok: true, endpointId: ENDPOINT_ID, runpod: body });
@@ -86,6 +112,8 @@ async function handleApi(req, res, url) {
           },
         }),
       });
+      const id = body.id || body.jobId;
+      if (id) upsertJob({ id, prompt, model: input.model || 'lite', num_seeds: Number(input.num_seeds || 1), status: body.status || 'SUBMITTED', runpod: body });
       return json(res, 200, body);
     }
 
@@ -93,6 +121,7 @@ async function handleApi(req, res, url) {
     if (req.method === 'GET' && statusMatch) {
       const jobId = encodeURIComponent(statusMatch[1]);
       const body = await runpodFetch(`/status/${jobId}`, { method: 'GET', headers: { 'content-type': undefined } });
+      upsertJob({ id: statusMatch[1], status: body.status || body.state || 'UNKNOWN', result: body });
       return json(res, 200, body);
     }
 

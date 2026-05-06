@@ -5,17 +5,22 @@ const seedsEl = document.querySelector('#seeds');
 const submit = document.querySelector('#submit');
 const statusEl = document.querySelector('#status');
 const resultEl = document.querySelector('#result');
+const historyEl = document.querySelector('#history');
 
 function setStatus(html, cls = '') {
   statusEl.className = `card muted ${cls}`;
   statusEl.innerHTML = html;
 }
 
+function fileLinksFrom(job) {
+  const output = job?.output || job?.result?.output || job?.result || job;
+  const files = output?.files || [];
+  return files.filter(f => f.url).map(f => `<li><a href="${f.url}" target="_blank" rel="noopener">${escapeHtml(f.name || f.url)}</a></li>`).join('');
+}
+
 function showResult(job) {
   resultEl.classList.remove('hidden');
-  const output = job.output || job;
-  const files = output?.files || [];
-  const links = files.filter(f => f.url).map(f => `<li><a href="${f.url}" target="_blank" rel="noopener">${f.name || f.url}</a></li>`).join('');
+  const links = fileLinksFrom(job);
   resultEl.innerHTML = `
     <h2 class="good">Done</h2>
     ${links ? `<ul>${links}</ul>` : '<p>No public file URLs were returned.</p>'}
@@ -34,6 +39,30 @@ async function api(path, opts) {
   return body;
 }
 
+async function loadHistory() {
+  try {
+    const body = await api('/api/history');
+    const jobs = body.jobs || [];
+    if (!jobs.length) { historyEl.textContent = 'No jobs yet.'; return; }
+    historyEl.innerHTML = jobs.map(j => {
+      const links = fileLinksFrom(j);
+      const prompt = escapeHtml(j.prompt || '(prompt unavailable)');
+      const status = escapeHtml(j.status || 'UNKNOWN');
+      return `<article class="history-item"><div><strong>${status}</strong> <small>${escapeHtml(j.updatedAt || j.createdAt || '')}</small></div><p>${prompt}</p>${links ? `<ul>${links}</ul>` : `<button type="button" data-job="${escapeHtml(j.id)}">Refresh</button>`}</article>`;
+    }).join('');
+  } catch (err) {
+    historyEl.innerHTML = `<span class="bad">Could not load history: ${escapeHtml(err.message)}</span>`;
+  }
+}
+
+historyEl.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-job]');
+  if (!button) return;
+  button.disabled = true;
+  try { await api(`/api/jobs/${encodeURIComponent(button.dataset.job)}`); await loadHistory(); }
+  finally { button.disabled = false; }
+});
+
 async function poll(jobId) {
   let delay = 2500;
   for (;;) {
@@ -41,7 +70,7 @@ async function poll(jobId) {
     const state = body.status || body.state || 'UNKNOWN';
     setStatus(`<strong>Status:</strong> ${escapeHtml(state)}<br><small>Job ${escapeHtml(jobId)}</small>`);
     if (['COMPLETED', 'FAILED', 'CANCELLED', 'TIMED_OUT'].includes(state)) {
-      if (state === 'COMPLETED') showResult(body);
+      if (state === 'COMPLETED') { showResult(body); await loadHistory(); }
       else {
         resultEl.classList.remove('hidden');
         resultEl.innerHTML = `<h2 class="bad">${escapeHtml(state)}</h2><pre>${escapeHtml(JSON.stringify(body, null, 2))}</pre>`;
@@ -73,6 +102,10 @@ form.addEventListener('submit', async (event) => {
     resultEl.classList.remove('hidden');
     resultEl.innerHTML = `<pre>${escapeHtml(JSON.stringify(err.body || err, null, 2))}</pre>`;
   } finally {
+    await loadHistory();
     submit.disabled = false;
   }
 });
+
+loadHistory();
+setInterval(loadHistory, 30000);
