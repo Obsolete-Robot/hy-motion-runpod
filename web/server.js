@@ -97,12 +97,13 @@ async function handleApi(req, res, url) {
       if (!prompt) return json(res, 400, { error: 'Prompt is required.' });
       if (prompt.length > 1000) return json(res, 400, { error: 'Prompt is too long.' });
 
+      const model = 'lite';
       const body = await runpodFetch('/run', {
         method: 'POST',
         body: JSON.stringify({
           input: {
             prompt,
-            model: input.model || 'lite',
+            model,
             num_seeds: Number(input.num_seeds || 1),
             timeout_seconds: Number(input.timeout_seconds || 900),
           },
@@ -113,7 +114,7 @@ async function handleApi(req, res, url) {
         }),
       });
       const id = body.id || body.jobId;
-      if (id) upsertJob({ id, prompt, model: input.model || 'lite', num_seeds: Number(input.num_seeds || 1), status: body.status || 'SUBMITTED', runpod: body });
+      if (id) upsertJob({ id, prompt, model, num_seeds: Number(input.num_seeds || 1), status: body.status || 'SUBMITTED', runpod: body });
       return json(res, 200, body);
     }
 

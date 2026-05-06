@@ -25,12 +25,15 @@ MODEL_ROOT = Path(os.getenv("MODEL_ROOT", "/runpod-volume/ckpts/tencent"))
 WORK_ROOT = Path(os.getenv("WORK_ROOT", "/tmp/hymotion-jobs"))
 
 
-def model_path(variant: str) -> Path:
+def model_path(variant: str) -> tuple[str, Path]:
     variant = (variant or "lite").lower()
     if variant in {"lite", "hy-motion-1.0-lite", "HY-Motion-1.0-Lite".lower()}:
-        return MODEL_ROOT / "HY-Motion-1.0-Lite"
+        return "lite", MODEL_ROOT / "HY-Motion-1.0-Lite"
     if variant in {"full", "standard", "hy-motion-1.0", "HY-Motion-1.0".lower()}:
-        return MODEL_ROOT / "HY-Motion-1.0"
+        full_path = MODEL_ROOT / "HY-Motion-1.0"
+        if full_path.exists():
+            return "full", full_path
+        return "lite", MODEL_ROOT / "HY-Motion-1.0-Lite"
     raise ValueError(f"Unknown model variant: {variant}")
 
 
@@ -75,12 +78,14 @@ def handler(event):
     # HY-Motion works best with short action-focused English prompts.
     (input_dir / "prompt.txt").write_text(prompt, encoding="utf-8")
 
-    variant = inp.get("model") or os.getenv("MODEL_VARIANT", "lite")
-    mp = model_path(variant)
+    requested_variant = inp.get("model") or os.getenv("MODEL_VARIANT", "lite")
+    resolved_variant, mp = model_path(requested_variant)
     if not mp.exists():
         return {
             "error": "Model path not found. Run/download checkpoints first or mount persistent volume.",
             "model_path": str(mp),
+            "requested_model": requested_variant,
+            "resolved_model": resolved_variant,
         }
 
     cmd = [
