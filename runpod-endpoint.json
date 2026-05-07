@@ -1,8 +1,8 @@
 {
   "template": {
-    "id": "as3vo8aljh",
-    "name": "hy-motion-runpod",
-    "imageName": "ghcr.io/obsolete-robot/hy-motion-runpod:latest",
+    "id": "r4ec35kd1v",
+    "name": "hy-motion-runpod-upload-fallback-a877bdd",
+    "imageName": "ghcr.io/obsolete-robot/hy-motion-runpod:upload-fallback-a877bdd",
     "isServerless": true,
     "containerDiskInGb": 30
   },
@@ -11,7 +11,7 @@
     "name": "hy-motion",
     "gpuIds": "AMPERE_48",
     "idleTimeout": 5,
-    "templateId": "as3vo8aljh",
+    "templateId": "r4ec35kd1v",
     "workersMax": 1,
     "workersMin": 0
   }
