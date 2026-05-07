@@ -7,12 +7,12 @@
     "containerDiskInGb": 30
   },
   "endpoint": {
-    "id": "uytph7tbhb3j9q",
-    "name": "hy-motion",
+    "id": "qzle4amiuxzga6",
+    "name": "hy-motion-upload-fallback",
     "gpuIds": "AMPERE_48",
     "idleTimeout": 5,
     "templateId": "r4ec35kd1v",
-    "workersMax": 1,
+    "workersMax": 2,
     "workersMin": 0
   }
 }
