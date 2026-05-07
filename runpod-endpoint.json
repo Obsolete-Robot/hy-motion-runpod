@@ -1,8 +1,8 @@
 {
   "template": {
-    "id": "r4ec35kd1v",
-    "name": "hy-motion-runpod-upload-fallback-a877bdd",
-    "imageName": "ghcr.io/obsolete-robot/hy-motion-runpod:upload-fallback-a877bdd",
+    "id": "lou2tahxuw",
+    "name": "hy-motion-runpod-prompt-guard-88b8bc8",
+    "imageName": "ghcr.io/obsolete-robot/hy-motion-runpod:prompt-guard-88b8bc8",
     "isServerless": true,
     "containerDiskInGb": 30
   },
@@ -11,7 +11,7 @@
     "name": "hy-motion-upload-fallback",
     "gpuIds": "AMPERE_48",
     "idleTimeout": 5,
-    "templateId": "r4ec35kd1v",
+    "templateId": "lou2tahxuw",
     "workersMax": 2,
     "workersMin": 0
   }
