@@ -119,6 +119,15 @@ def handler(event):
             "resolved_model": resolved_variant,
         }
 
+    disable_duration_est = bool(inp.get("disable_duration_est", True))
+    disable_rewrite = bool(inp.get("disable_rewrite", True))
+    if not disable_duration_est or not disable_rewrite:
+        prompter_path = Path(os.getenv("PROMPT_ENGINEERING_MODEL_PATH", HYMOTION_DIR / "ckpts" / "Text2MotionPrompter"))
+        if not prompter_path.exists():
+            print(f">>> Prompt engineering model not found at {prompter_path}; disabling rewrite and duration estimation.")
+            disable_duration_est = True
+            disable_rewrite = True
+
     cmd = [
         "python3", "local_infer.py",
         "--model_path", str(mp),
@@ -127,9 +136,9 @@ def handler(event):
         "--cfg_scale", str(float(inp.get("cfg_scale", 5.0))),
         "--num_seeds", str(int(inp.get("num_seeds", 1))),
     ]
-    if bool(inp.get("disable_duration_est", True)):
+    if disable_duration_est:
         cmd.append("--disable_duration_est")
-    if bool(inp.get("disable_rewrite", True)):
+    if disable_rewrite:
         cmd.append("--disable_rewrite")
     if inp.get("validation_steps") is not None:
         cmd.extend(["--validation_steps", str(int(inp["validation_steps"]))])
@@ -171,8 +180,8 @@ def handler(event):
             "duration_frames": duration_frames,
             "duration_seconds": (duration_frames / 30.0) if duration_frames is not None else None,
             "cfg_scale": float(inp.get("cfg_scale", 5.0)),
-            "disable_rewrite": bool(inp.get("disable_rewrite", True)),
-            "disable_duration_est": bool(inp.get("disable_duration_est", True)),
+            "disable_rewrite": disable_rewrite,
+            "disable_duration_est": disable_duration_est,
             "validation_steps": inp.get("validation_steps"),
         },
         "log_tail": result.stdout[-4000:],
